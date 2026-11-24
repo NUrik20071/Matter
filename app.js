@@ -374,3 +374,50 @@ on(window, 'pagehide', event => {
 	else dispose();
 });
 on(window, 'pageshow', () => { arbitrateRendering(); });
+
+
+// Two-finger tap on mouse-reactive surfaces behaves like a secondary mouse click.
+(() => {
+	const active = new Map();
+	let pair = null;
+	const eligible = target => target instanceof Element
+		&& target.closest('[data-interactive]')
+		&& !target.closest('a,button,input,textarea,select,[data-readable],.ov-dialog');
+	const point = event => ({ x: event.clientX, y: event.clientY, target: event.target, time: performance.now() });
+	const dispatchRightClick = (target, x, y) => {
+		if (!eligible(target)) return;
+		const options = { bubbles: true, cancelable: true, composed: true, view: window, button: 2, buttons: 2, clientX: x, clientY: y };
+		target.dispatchEvent(new MouseEvent('mousedown', options));
+		target.dispatchEvent(new MouseEvent('mouseup', { ...options, buttons: 0 }));
+		target.dispatchEvent(new MouseEvent('contextmenu', { ...options, buttons: 0 }));
+	};
+	window.addEventListener('pointerdown', event => {
+		if (event.pointerType !== 'touch') return;
+		active.set(event.pointerId, point(event));
+		if (active.size === 2) {
+			const points = [...active.values()];
+			const target = document.elementFromPoint((points[0].x + points[1].x) / 2, (points[0].y + points[1].y) / 2) || points[0].target;
+			pair = { ids: [...active.keys()], points, target, started: performance.now(), moved: false };
+		}
+		if (active.size > 2) pair = null;
+	}, { capture: true, passive: true });
+	window.addEventListener('pointermove', event => {
+		if (!pair || !active.has(event.pointerId)) return;
+		const start = pair.points[pair.ids.indexOf(event.pointerId)];
+		if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 14) pair.moved = true;
+	}, { capture: true, passive: true });
+	const finish = event => {
+		if (event.pointerType !== 'touch' || !active.has(event.pointerId)) return;
+		const current = active.get(event.pointerId);
+		active.delete(event.pointerId);
+		if (!pair || !pair.ids.includes(event.pointerId)) return;
+		const moved = pair.moved || Math.hypot(event.clientX - current.x, event.clientY - current.y) > 14;
+		const duration = performance.now() - pair.started;
+		if (active.size === 0) {
+			if (!moved && duration < 450) dispatchRightClick(pair.target, (pair.points[0].x + pair.points[1].x) / 2, (pair.points[0].y + pair.points[1].y) / 2);
+			pair = null;
+		}
+	};
+	window.addEventListener('pointerup', finish, { capture: true, passive: true });
+	window.addEventListener('pointercancel', event => { active.delete(event.pointerId); pair = null; }, { capture: true, passive: true });
+})();

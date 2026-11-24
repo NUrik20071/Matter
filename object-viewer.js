@@ -288,9 +288,31 @@ export function initObjectViewer({ reducedMotion = false } = {}) {
     listen(element, 'pointerleave', () => { if (reduced) return; inlinePointer = { x: 0, y: 0 }; requestDraw(); }, { passive: true });
     listen(element, 'pointerdown', event => { if (opened || inlineStage !== element || reduced) return; pulse = 1; requestDraw(); }, { passive: true });
   });
-  const observer = new IntersectionObserver(entries => { entries.forEach(entry => visibility.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0)); chooseInline(); }, { threshold: [0, .15, .4, .7, 1] });
-  inlineStages.forEach(element => observer.observe(element));
-  const resizeObserver = new ResizeObserver(() => requestDraw()); resizeObserver.observe(stage); inlineStages.forEach(element => resizeObserver.observe(element));
+  const observer = typeof IntersectionObserver === 'function' ? new IntersectionObserver(entries => { entries.forEach(entry => visibility.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0)); chooseInline(); }, { threshold: [0, .15, .4, .7, 1] }) : null;
+  if (observer) {
+    inlineStages.forEach(element => observer.observe(element));
+  } else {
+    // Older embedded browsers may not implement IntersectionObserver.
+    // Measure visible portions on scroll instead of failing the entire viewer.
+    const updateInlineVisibility = () => {
+      let bestRatio = 0;
+      inlineStages.forEach(element => {
+        const rect = element.getBoundingClientRect();
+        const visible = Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0));
+        const ratio = visible / Math.max(1, rect.height);
+        visibility.set(element, ratio);
+        bestRatio = Math.max(bestRatio, ratio);
+      });
+      chooseInline();
+    };
+    listen(window, 'scroll', updateInlineVisibility, { passive: true });
+    listen(window, 'resize', updateInlineVisibility, { passive: true });
+    updateInlineVisibility();
+  }
+  const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => requestDraw()) : null;
+  resizeObserver?.observe(stage);
+  inlineStages.forEach(element => resizeObserver?.observe(element));
+  if (!resizeObserver) listen(window, 'resize', requestDraw, { passive: true });
   listen(window, 'scroll', () => { if (!opened && inlineStage && !reduced) requestDraw(); }, { passive: true });
   listen(window, 'resize', requestDraw, { passive: true });
   listen(window, 'blur', () => { pointers.clear(); drag = pinch = null; });

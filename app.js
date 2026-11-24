@@ -341,7 +341,7 @@ on(window, 'touchstart', () => { loadSculpture(); }, { passive: true });
 on(window, 'keydown', event => { if (['ArrowDown', 'PageDown', 'End', ' '].includes(event.key)) loadSculpture(); });
 on(window, 'resize', () => { needsMeasure = true; wake(); }, { passive: true });
 on(window, 'pageshow', () => { needsMeasure = true; wake(); });
-on(window, 'load', () => { needsMeasure = true; wake(); });
+on(window, 'load', () => { needsMeasure = true; wake(); loadSculpture(); });
 document.fonts?.ready.then(() => { if (!disposed) { needsMeasure = true; wake(); } });
 on(preference, 'change', event => { if (!savedMotion) setReduced(event.matches); });
 actionButtons.forEach(button => on(button, 'click', () => {

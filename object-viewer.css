@@ -5,4 +5,5 @@
 @media(prefers-reduced-motion:reduce){.ov-dialog,.ov-dialog *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 [data-object-stage][data-object-state=loading]::after,[data-object-stage][data-object-state=error]::after,[data-object-stage][data-object-state=lost]::after{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:24px;text-align:center;font-size:12px;line-height:1.6;color:#20201d;background:#e9e6de;pointer-events:none}[data-object-stage][data-object-state=loading]::after{content:'Загружаем полноценную 3D-модель…'}[data-object-stage][data-object-state=error]::after{content:'Полноценная 3D-модель не загрузилась'}[data-object-stage][data-object-state=lost]::after{content:'Потеряно соединение с 3D-графикой'}
+.ov-dialog .ov-hotspot{background:#20201d}.ov-dialog .ov-hotspot[aria-pressed=true]{background:#263aed}
 @media(max-width:650px) and (pointer:coarse){.ov-dialog .ov-canvas{touch-action:none;cursor:grab}.ov-dialog [data-ov-rotate]{display:none}.ov-dialog .ov-stage{overscroll-behavior:contain}.ov-dialog .ov-help{padding:10px 12px;background:#e3e0d8;font-size:11px}}

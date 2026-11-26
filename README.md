@@ -49,7 +49,7 @@ python3 -m http.server 8000
 
 - Branch: `main`
 - Build command: пустая
-- Publish directory: `. ` (корень репозитория; в настройках Render — `.`)
+- Publish directory: `.` (корень репозитория; в настройках Render — `.`)
 - Auto deploy: при коммите в подключённую ветку
 
 ## Ограничения и честное описание
